@@ -1,0 +1,10 @@
+[gd_resource type="Resource" load_steps=3 format=3 uid="uid://c7yaifgq0kid"]
+
+[ext_resource type="Script" uid="uid://bkdco7yx4rpsy" path="res://scripts/PieceData.gd" id="1_vyjco"]
+[ext_resource type="Texture2D" uid="uid://c4nxkkf4kpa4a" path="res://assets/Blue.png" id="1_w02lv"]
+
+[resource]
+script = ExtResource("1_vyjco")
+piece_texture = ExtResource("1_w02lv")
+tetromino_type = 3
+spwan_position = Vector2(-24, -456)
