@@ -8,6 +8,7 @@ var is_netx_piece
 var pieces = []
 
 @onready var piece_scene = preload("res://scenes/piece/Piece.tscn")
+@onready var timer = $Timer
 
 var tetromino_cells
 
@@ -26,3 +27,30 @@ func _ready():
 		position = tetromino_data.spawn_position
 		wall_kicks = Shared.wall_kicks_i if tetromino_data.tetromino_type == Shared.Tetromino.I else Shared.wall_kicks_jlostz
 		
+
+
+func _input(event):
+	if Input.is_action_just_pressed("left"):
+		move(Vector2.LEFT)
+	elif Input.is_action_just_pressed("right"):
+		move(Vector2.RIGHT)
+	elif Input.is_action_just_pressed("down"):
+		move(Vector2.DOWN)
+	elif Input.is_action_just_pressed("hard_drop"):
+		pass
+	elif Input.is_action_just_pressed("rotate_left"):
+		pass
+
+func move(direction: Vector2):
+	var new_position = calculate_global_position(direction, global_position)
+	if new_position:
+		global_position = new_position
+		return true
+	return false
+
+func calculate_global_position(direction: Vector2, starting_global_position: Vector2):
+	return starting_global_position + direction * pieces[0].get_size().x
+	
+
+func _on_timer_timeout() -> void:
+	move(Vector2.DOWN)
