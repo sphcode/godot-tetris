@@ -41,7 +41,7 @@ func _input(event):
 	elif Input.is_action_just_pressed("down"):
 		move(Vector2.DOWN)
 	elif Input.is_action_just_pressed("hard_drop"):
-		pass
+		hard_drop()
 	elif Input.is_action_just_pressed("rotate_left"):
 		pass
 	elif Input.is_action_just_pressed("rotate_right"):
@@ -65,6 +65,10 @@ func is_within_game_bounds(direction: Vector2, starting_global_position: Vector2
 		if new_position.x < bounds.get("min_x") || new_position.x > bounds.get("max_x") || new_position.y >= bounds.get("max_y"):
 			return false
 	return true
+
+func hard_drop():
+	while (move(Vector2.DOWN)):
+		continue
 
 func _on_timer_timeout() -> void:
 	move(Vector2.DOWN)
