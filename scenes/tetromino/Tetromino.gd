@@ -14,6 +14,7 @@ var wall_kicks
 var tetromino_data
 var is_netx_piece
 var pieces = []
+var other_tetrominos: Array[Tetromino] = []
 
 @onready var piece_scene = preload("res://scenes/piece/Piece.tscn")
 @onready var timer = $Timer
@@ -57,6 +58,8 @@ func move(direction: Vector2):
 	return false
 
 func calculate_global_position(direction: Vector2, starting_global_position: Vector2):
+	if is_colliding_with_other_tetrominos(direction, starting_global_position):
+		return null
 	if !is_within_game_bounds(direction, starting_global_position):
 		return null
 	return starting_global_position + direction * pieces[0].get_size().x
@@ -67,6 +70,15 @@ func is_within_game_bounds(direction: Vector2, starting_global_position: Vector2
 		if new_position.x < bounds.get("min_x") || new_position.x > bounds.get("max_x") || new_position.y >= bounds.get("max_y"):
 			return false
 	return true
+
+func is_colliding_with_other_tetrominos(direction: Vector2, starting_global_position: Vector2):
+	for tetromino in other_tetrominos:
+		var tetromino_pieces = tetromino.pieces
+		for tetromino_piece in tetromino_pieces:
+			for piece in pieces:
+				if starting_global_position + piece.position + direction * piece.get_size().x == tetromino.global_position + tetromino_piece.position:
+					return true
+	return false
 
 func hard_drop():
 	while (move(Vector2.DOWN)):
