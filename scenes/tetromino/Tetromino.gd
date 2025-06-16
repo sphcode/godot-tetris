@@ -10,6 +10,7 @@ var bounds = {
 	"max_y": 457
 }
 
+var rotation_index = 0
 var wall_kicks
 var tetromino_data
 var is_netx_piece
@@ -46,9 +47,9 @@ func _input(event):
 	elif Input.is_action_just_pressed("hard_drop"):
 		hard_drop()
 	elif Input.is_action_just_pressed("rotate_left"):
-		pass
+		rotate_tetromino(-1)
 	elif Input.is_action_just_pressed("rotate_right"):
-		pass
+		rotate_tetromino(1)
 
 func move(direction: Vector2):
 	var new_position = calculate_global_position(direction, global_position)
@@ -84,6 +85,29 @@ func hard_drop():
 	while (move(Vector2.DOWN)):
 		continue
 	lock()
+
+func rotate_tetromino(direction: int):
+	var original_rotation_index = rotation_index
+	if tetromino_data.tetromino_type == Shared.Tetromino.O:
+		return
+
+	apply_rotation(direction)
+	
+	rotation_index = wrap(rotation_index + direction, 0, 4)
+
+func apply_rotation(direction: int):
+	var rotation_matrix = Shared.clockwise_rotation_matrix if direction == 1 else Shared.counter_clockwise_rotation_matrix
+
+	var tetromino_cells = Shared.cells[tetromino_data.tetromino_type]
+
+	for i in tetromino_cells.size():
+		var cell = tetromino_cells[i]
+		var coordindates = rotation_matrix[0] * cell.x + rotation_matrix[1] * cell.y
+		tetromino_cells[i] = coordindates
+
+	for i in pieces.size():
+		var piece = pieces[i]
+		piece.position = tetromino_cells[i] * piece.get_size()
 
 func lock():
 	timer.stop()
