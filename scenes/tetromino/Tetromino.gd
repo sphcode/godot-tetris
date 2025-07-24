@@ -92,8 +92,28 @@ func rotate_tetromino(direction: int):
 		return
 
 	apply_rotation(direction)
-	
+
 	rotation_index = wrap(rotation_index + direction, 0, 4)
+
+	if !test_wall_kicks(rotation_index, direction):
+		rotation_index = original_rotation_index
+		apply_rotation(-direction)
+
+func test_wall_kicks(rotation_index: int, rotation_direction: int):
+	var wall_kick_index = get_wall_kick_index(rotation_index, rotation_direction)
+
+	for i in wall_kicks[0].size():
+		var translation = wall_kicks[wall_kick_index][i]
+		if move(translation):
+			return true
+	return false
+
+func get_wall_kick_index(rotation_index: int, rotation_direction: int):
+	var wall_kick_index = rotation_index * 2
+	if rotation_direction < 0:
+		wall_kick_index -= 1
+
+	return wrap(wall_kick_index, 0, wall_kicks.size())
 
 func apply_rotation(direction: int):
 	var rotation_matrix = Shared.clockwise_rotation_matrix if direction == 1 else Shared.counter_clockwise_rotation_matrix
