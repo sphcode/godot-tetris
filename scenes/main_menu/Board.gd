@@ -6,11 +6,17 @@ signal current_tetromino_locked
 
 const ROW_COUNT = 20
 const COLUMN_COUNT = 10
+const NEXT_PIECE_SCALE = Vector2(0.5, 0.5)
+const NEXT_PIECE_GAP = 12.0
 
 var tetrominos: Array[Tetromino] = []
+var next_tetromino
+
+@onready var panel_container = $"../PanelContainer"
+@onready var next_piece_label = $"../PanelContainer/Label"
 @export var tetromino_scene: PackedScene
 
-func spawn_tetromino(type: Shared.Tetromino, is_next_piece, spawn_position):
+func spawn_tetromino(type: Shared.Tetromino, is_next_piece):
 	var tetromino_data = Shared.data[type]
 	var tetromino: Tetromino = tetromino_scene.instantiate() as Tetromino
 
@@ -22,8 +28,35 @@ func spawn_tetromino(type: Shared.Tetromino, is_next_piece, spawn_position):
 		tetromino.other_tetrominos = tetrominos
 		tetromino.tetromino_locked.connect(on_tetromino_locked)
 		add_child(tetromino)
+	else:
+		tetromino.scale = NEXT_PIECE_SCALE
+		panel_container.add_child(tetromino)
+		next_tetromino = tetromino
+		if !tetromino.is_node_ready():
+			await tetromino.ready
+		center_next_tetromino_below_label(tetromino)
+
+func center_next_tetromino_below_label(tetromino: Tetromino):
+	var first_piece = tetromino.pieces[0]
+	var half_piece_size = first_piece.get_size() / 2.0
+	var min_position = first_piece.position - half_piece_size
+	var max_position = first_piece.position + half_piece_size
+
+	for piece in tetromino.pieces:
+		min_position = min_position.min(piece.position - half_piece_size)
+		max_position = max_position.max(piece.position + half_piece_size)
+
+	var tetromino_center = (min_position + max_position) / 2.0
+	var label_center_x = next_piece_label.position.x + next_piece_label.size.x / 2.0
+	var preview_top = next_piece_label.position.y + next_piece_label.size.y + NEXT_PIECE_GAP
+
+	tetromino.position = Vector2(
+		label_center_x - tetromino_center.x * tetromino.scale.x,
+		preview_top - min_position.y * tetromino.scale.y
+	)
 
 func on_tetromino_locked(tetromino: Tetromino):
+	next_tetromino.queue_free()
 	tetrominos.append(tetromino)
 	current_tetromino_locked.emit()
 	clear_lines()

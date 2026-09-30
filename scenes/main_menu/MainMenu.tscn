@@ -41,3 +41,13 @@ script = ExtResource("3_qmweu")
 [node name="Board" type="Node" parent="."]
 script = ExtResource("4_f1mbi")
 tetromino_scene = ExtResource("5_f1mbi")
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+offset_left = -46.0
+offset_top = -637.0
+offset_right = 46.0
+offset_bottom = -597.0
+
+[node name="Label" type="Label" parent="PanelContainer"]
+layout_mode = 2
+text = "NEXT PIECE:"

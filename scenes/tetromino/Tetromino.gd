@@ -42,8 +42,14 @@ func _ready():
 		ghost_tetromino.tetromino_data = tetromino_data
 		ghost_tetromino.ready.connect(hard_drop_ghost, CONNECT_ONE_SHOT)
 		get_tree().root.add_child.call_deferred(ghost_tetromino)
+	else:
+		timer.stop()
+		set_process_input(false)
 
 func hard_drop_ghost():
+	if !is_instance_valid(ghost_tetromino):
+		return
+
 	var final_hard_drop_position
 	var ghost_position_update = calculate_global_position(Vector2.DOWN, global_position)
 	
