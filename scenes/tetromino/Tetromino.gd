@@ -16,9 +16,11 @@ var tetromino_data
 var is_netx_piece
 var pieces = []
 var other_tetrominos: Array[Tetromino] = []
+var ghost_tetromino
 
 @onready var piece_scene = preload("res://scenes/piece/Piece.tscn")
 @onready var timer = $Timer
+@onready var ghost_tetromino_scene = preload("res://scenes/tetromino/GhostTetromino.tscn")
 
 var tetromino_cells
 
@@ -36,7 +38,32 @@ func _ready():
 	if !is_netx_piece:
 		position = tetromino_data.spawn_position
 		wall_kicks = Shared.wall_kicks_i if tetromino_data.tetromino_type == Shared.Tetromino.I else Shared.wall_kicks_jlostz
+		ghost_tetromino = ghost_tetromino_scene.instantiate() as GhostTetromino
+		ghost_tetromino.tetromino_data = tetromino_data
+		ghost_tetromino.ready.connect(hard_drop_ghost, CONNECT_ONE_SHOT)
+		get_tree().root.add_child.call_deferred(ghost_tetromino)
 
+func hard_drop_ghost():
+	var final_hard_drop_position
+	var ghost_position_update = calculate_global_position(Vector2.DOWN, global_position)
+	
+	while ghost_position_update != null:
+		ghost_position_update = calculate_global_position(Vector2.DOWN, ghost_position_update)
+		if ghost_position_update != null:
+			final_hard_drop_position = ghost_position_update
+
+	if final_hard_drop_position != null:
+		var children = get_children().filter(func(c): return c is Piece)
+		
+		var pieces_position = []
+		
+		for i in children.size():
+			var piece_position = children[i].position
+			pieces_position.append(piece_position)
+		
+		ghost_tetromino.set_ghost_tetromino(final_hard_drop_position, pieces_position)
+		
+			
 func _input(event):
 	if Input.is_action_just_pressed("left"):
 		move(Vector2.LEFT)
@@ -55,6 +82,8 @@ func move(direction: Vector2):
 	var new_position = calculate_global_position(direction, global_position)
 	if new_position:
 		global_position = new_position
+		if direction != Vector2.DOWN:
+			hard_drop_ghost.call_deferred()
 		return true
 	return false
 
@@ -98,6 +127,8 @@ func rotate_tetromino(direction: int):
 	if !test_wall_kicks(rotation_index, direction):
 		rotation_index = original_rotation_index
 		apply_rotation(-direction)
+	
+	hard_drop_ghost.call_deferred()
 
 func test_wall_kicks(rotation_index: int, rotation_direction: int):
 	var wall_kick_index = get_wall_kick_index(rotation_index, rotation_direction)
@@ -131,6 +162,8 @@ func apply_rotation(direction: int):
 
 func lock():
 	timer.stop()
+	if is_instance_valid(ghost_tetromino):
+		ghost_tetromino.queue_free()
 	tetromino_locked.emit(self)
 	set_process_input(false)
 
