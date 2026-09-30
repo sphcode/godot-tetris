@@ -3,14 +3,17 @@ extends Node
 class_name Board
 
 signal current_tetromino_locked
+signal game_over
 
 const ROW_COUNT = 20
 const COLUMN_COUNT = 10
+const MIN_BOARD_Y = -456.0
 const NEXT_PIECE_SCALE = Vector2(0.5, 0.5)
 const NEXT_PIECE_GAP = 12.0
 
 var tetrominos: Array[Tetromino] = []
 var next_tetromino
+var is_game_over = false
 
 @onready var panel_container = $"../PanelContainer"
 @onready var next_piece_label = $"../PanelContainer/Label"
@@ -18,6 +21,14 @@ var next_tetromino
 
 func spawn_tetromino(type: Shared.Tetromino, is_next_piece):
 	var tetromino_data = Shared.data[type]
+
+	if is_game_over:
+		return false
+
+	if !is_next_piece && is_spawn_position_blocked(tetromino_data):
+		end_game()
+		return false
+
 	var tetromino: Tetromino = tetromino_scene.instantiate() as Tetromino
 
 	tetromino.tetromino_data = tetromino_data
@@ -35,6 +46,22 @@ func spawn_tetromino(type: Shared.Tetromino, is_next_piece):
 		if !tetromino.is_node_ready():
 			await tetromino.ready
 		center_next_tetromino_below_label(tetromino)
+
+	return true
+
+func is_spawn_position_blocked(tetromino_data) -> bool:
+	for tetromino in tetrominos:
+		var locked_pieces = tetromino.get_children().filter(func(c): return c is Piece)
+		for locked_piece in locked_pieces:
+			if locked_piece.is_queued_for_deletion():
+				continue
+
+			for cell in Shared.cells[tetromino_data.tetromino_type]:
+				var spawn_piece_position = tetromino_data.spawn_position + cell * locked_piece.get_size().x
+				if spawn_piece_position == locked_piece.global_position:
+					return true
+
+	return false
 
 func center_next_tetromino_below_label(tetromino: Tetromino):
 	var first_piece = tetromino.pieces[0]
@@ -56,10 +83,36 @@ func center_next_tetromino_below_label(tetromino: Tetromino):
 	)
 
 func on_tetromino_locked(tetromino: Tetromino):
-	next_tetromino.queue_free()
+	if is_game_over:
+		return
+
+	if is_instance_valid(next_tetromino):
+		next_tetromino.queue_free()
 	tetrominos.append(tetromino)
-	current_tetromino_locked.emit()
+
+	if check_game_over(tetromino):
+		end_game()
+		return
+
 	clear_lines()
+	current_tetromino_locked.emit()
+
+func check_game_over(tetromino: Tetromino) -> bool:
+	var tetromino_pieces = tetromino.get_children().filter(func(c): return c is Piece)
+	for piece in tetromino_pieces:
+		if !piece.is_queued_for_deletion() && piece.global_position.y < MIN_BOARD_Y:
+			return true
+
+	return false
+
+func end_game():
+	if is_game_over:
+		return
+
+	is_game_over = true
+	if is_instance_valid(next_tetromino) && !next_tetromino.is_queued_for_deletion():
+		next_tetromino.queue_free()
+	game_over.emit()
 
 func clear_lines():
 	var board_pieces = fill_board_pieces()

@@ -25,7 +25,7 @@ var ghost_tetromino
 var tetromino_cells
 
 func _ready():
-	tetromino_cells = Shared.cells[tetromino_data.tetromino_type]
+	tetromino_cells = Shared.cells[tetromino_data.tetromino_type].duplicate()
 	
 	for cell in tetromino_cells:
 		var piece = piece_scene.instantiate() as Piece
@@ -154,8 +154,6 @@ func get_wall_kick_index(rotation_index: int, rotation_direction: int):
 
 func apply_rotation(direction: int):
 	var rotation_matrix = Shared.clockwise_rotation_matrix if direction == 1 else Shared.counter_clockwise_rotation_matrix
-
-	var tetromino_cells = Shared.cells[tetromino_data.tetromino_type]
 
 	for i in tetromino_cells.size():
 		var cell = tetromino_cells[i]
